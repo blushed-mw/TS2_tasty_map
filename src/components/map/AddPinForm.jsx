@@ -5,7 +5,7 @@ import { TEAM_MEMBERS, getCharacterIdByName } from '../../constants/characters'
  * 핀 등록 모달 폼
  * coord: { lat, lng } — 지도 클릭으로 받은 좌표 (또는 장소 검색으로 업데이트)
  */
-export default function AddPinForm({ coord, onSubmit, onClose }) {
+export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) {
   const [form, setForm] = useState({
     place_name: '',
     review: '',
@@ -35,11 +35,13 @@ export default function AddPinForm({ coord, onSubmit, onClose }) {
   }
 
   const handleSelectResult = (result) => {
-    setSelectedCoord({ lat: parseFloat(result.y), lng: parseFloat(result.x) })
+    const coord = { lat: parseFloat(result.y), lng: parseFloat(result.x) }
+    setSelectedCoord(coord)
     setSelectedAddress(result.road_address_name || result.address_name)
     setForm((f) => ({ ...f, place_name: result.place_name }))
     setSearchResults([])
     setSearchQuery('')
+    onPlaceSelect?.(coord)
   }
 
   const handleSubmit = async (e) => {

@@ -1,20 +1,17 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Map, CustomOverlayMap, useKakaoLoader } from 'react-kakao-maps-sdk'
 import { SKT_TOWER, MAP_DEFAULT_LEVEL } from '../../constants/locations'
 import CharacterMarker from './CharacterMarker'
 import InfoPopup from './InfoPopup'
 
-/**
- * 카카오맵 컨테이너
- * places: usePlaces()에서 가져온 맛집 배열
- * onMapClick: 지도 클릭 시 좌표 전달 콜백
- */
-export default function KakaoMap({ places, onMapClick }) {
+export default function KakaoMap({ places, onMapClick, center }) {
   const [loading, error] = useKakaoLoader({
     appkey: import.meta.env.VITE_KAKAO_MAP_KEY,
     libraries: ['services'],
   })
   const [selectedPlace, setSelectedPlace] = useState(null)
+  // CustomOverlayMap 내부 클릭이 지도 onClick으로 전파되는 것을 차단하기 위한 플래그
+  const overlayClickedRef = useRef(false)
 
   if (loading) return <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">지도 불러오는 중...</div>
   if (error) {
@@ -23,21 +20,39 @@ export default function KakaoMap({ places, onMapClick }) {
   }
 
   const handleMapClick = (_map, mouseEvent) => {
+    if (overlayClickedRef.current) {
+      overlayClickedRef.current = false
+      return
+    }
     const lat = mouseEvent.latLng.getLat()
     const lng = mouseEvent.latLng.getLng()
     setSelectedPlace(null)
     onMapClick({ lat, lng })
   }
 
+  const handleMarkerClick = (p) => {
+    overlayClickedRef.current = true
+    setSelectedPlace(p)
+  }
+
+  const handleOverlayClick = () => {
+    overlayClickedRef.current = true
+  }
+
+  const handlePopupClose = () => {
+    overlayClickedRef.current = true
+    setSelectedPlace(null)
+  }
+
   return (
     <Map
-      center={{ lat: SKT_TOWER.lat, lng: SKT_TOWER.lng }}
+      center={center ?? { lat: SKT_TOWER.lat, lng: SKT_TOWER.lng }}
       level={MAP_DEFAULT_LEVEL}
       className="w-full h-full"
       onClick={handleMapClick}
     >
       {/* SKT 타워 고정 마커 */}
-      <CustomOverlayMap position={{ lat: SKT_TOWER.lat, lng: SKT_TOWER.lng }} yAnchor={1.3}>
+      <CustomOverlayMap position={{ lat: SKT_TOWER.lat, lng: SKT_TOWER.lng }} yAnchor={1}>
         <div className="flex flex-col items-center">
           <div className="w-11 h-11 rounded-full bg-red-100 border-2 border-red-400 flex items-center justify-center text-xl shadow-md">
             🏢
@@ -54,7 +69,7 @@ export default function KakaoMap({ places, onMapClick }) {
         <CharacterMarker
           key={place.id}
           place={place}
-          onClick={(p) => setSelectedPlace(p)}
+          onClick={handleMarkerClick}
         />
       ))}
 
@@ -62,7 +77,8 @@ export default function KakaoMap({ places, onMapClick }) {
       {selectedPlace && (
         <InfoPopup
           place={selectedPlace}
-          onClose={() => setSelectedPlace(null)}
+          onClose={handlePopupClose}
+          onOverlayClick={handleOverlayClick}
         />
       )}
     </Map>

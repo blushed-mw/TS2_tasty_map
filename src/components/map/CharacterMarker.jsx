@@ -11,7 +11,7 @@ export default function CharacterMarker({ place, onClick }) {
   return (
     <CustomOverlayMap
       position={{ lat: place.latitude, lng: place.longitude }}
-      yAnchor={1.3}
+      yAnchor={1}
     >
       <div
         className="flex flex-col items-center cursor-pointer select-none group"

@@ -6,7 +6,7 @@ import { SKT_TOWER } from '../../constants/locations'
 /**
  * 마커 클릭 시 나타나는 말풍선 팝업
  */
-export default function InfoPopup({ place, onClose }) {
+export default function InfoPopup({ place, onClose, onOverlayClick }) {
   if (!place) return null
 
   const char = getCharacter(place.character_id)
@@ -18,7 +18,7 @@ export default function InfoPopup({ place, onClose }) {
       position={{ lat: place.latitude, lng: place.longitude }}
       yAnchor={2.1}
     >
-      <div className="relative w-64 bg-white rounded-2xl shadow-xl border border-pink-100 p-4">
+      <div className="relative w-64 bg-white rounded-2xl shadow-xl border border-pink-100 p-4" onClick={onOverlayClick}>
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
