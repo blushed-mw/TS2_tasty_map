@@ -1,13 +1,23 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { getCharacter } from '../../constants/characters'
 import { walkingTimeFromTower } from '../../utils/distance'
 import { SKT_TOWER } from '../../constants/locations'
 import { usePlaceDetail } from '../../hooks/usePlaceDetail'
 
-export default function PlaceDetailPanel({ place, currentUser, onClose }) {
+export default function PlaceDetailPanel({ place, currentUser, onClose, onUpdateTags }) {
   const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const commentsEndRef = useRef(null)
+
+  const [isEditingTags, setIsEditingTags] = useState(false)
+  const [editTags, setEditTags] = useState([])
+  const [tagInput, setTagInput] = useState('')
+  const [savingTags, setSavingTags] = useState(false)
+
+  useEffect(() => {
+    setIsEditingTags(false)
+    setTagInput('')
+  }, [place?.id])
 
   const { likes, comments, toggleLike, addComment, deleteComment } = usePlaceDetail(place?.id)
 
@@ -17,6 +27,32 @@ export default function PlaceDetailPanel({ place, currentUser, onClose }) {
   const walkText = walkingTimeFromTower(place.latitude, place.longitude, SKT_TOWER)
   const kakaoUrl = `https://map.kakao.com/link/to/${encodeURIComponent(place.place_name)},${place.latitude},${place.longitude}/from/${encodeURIComponent('SKT타워')},${SKT_TOWER.lat},${SKT_TOWER.lng}`
   const myLike = likes.find((l) => l.member_name === currentUser)
+
+  const startEditTags = () => {
+    setEditTags(place.tags ?? [])
+    setTagInput('')
+    setIsEditingTags(true)
+  }
+
+  const addEditTag = (raw) => {
+    const cleaned = raw.trim().replace(/^#/, '')
+    if (!cleaned || editTags.includes(cleaned)) return
+    setEditTags((prev) => [...prev, cleaned])
+  }
+
+  const removeEditTag = (tag) => setEditTags((prev) => prev.filter((t) => t !== tag))
+
+  const handleSaveTags = async () => {
+    setSavingTags(true)
+    try {
+      await onUpdateTags(place.id, editTags)
+      setIsEditingTags(false)
+    } catch {
+      alert('태그 저장 중 오류가 발생했어요 😢')
+    } finally {
+      setSavingTags(false)
+    }
+  }
 
   const handleToggleLike = async () => {
     if (!currentUser) return
@@ -67,18 +103,92 @@ export default function PlaceDetailPanel({ place, currentUser, onClose }) {
       {/* 스크롤 본문 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {/* 태그 */}
-        {place.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {place.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-0.5 bg-pink-50 text-pink-400 rounded-full text-xs font-medium"
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-semibold text-gray-400">태그</span>
+            {!isEditingTags ? (
+              <button
+                onClick={startEditTags}
+                className="text-xs text-gray-300 hover:text-pink-400 transition-colors"
               >
-                #{tag}
-              </span>
-            ))}
+                ✏️ 편집
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveTags}
+                  disabled={savingTags}
+                  className="text-xs text-pink-500 font-semibold hover:text-pink-600 disabled:opacity-50"
+                >
+                  {savingTags ? '저장 중...' : '저장'}
+                </button>
+                <button
+                  onClick={() => setIsEditingTags(false)}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  취소
+                </button>
+              </div>
+            )}
           </div>
-        )}
+
+          {isEditingTags ? (
+            <>
+              {editTags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {editTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-pink-50 text-pink-500 rounded-full text-xs font-medium"
+                    >
+                      #{tag}
+                      <button
+                        onClick={() => removeEditTag(tag)}
+                        className="text-pink-300 hover:text-pink-500 leading-none"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 border border-gray-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  placeholder="태그 입력 후 Enter"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addEditTag(tagInput)
+                      setTagInput('')
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => { addEditTag(tagInput); setTagInput('') }}
+                  className="px-2.5 py-1.5 bg-pink-100 text-pink-600 rounded-xl text-xs font-medium hover:bg-pink-200 transition-colors"
+                >
+                  추가
+                </button>
+              </div>
+            </>
+          ) : place.tags?.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {place.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 bg-pink-50 text-pink-400 rounded-full text-xs font-medium"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-300">태그가 없어요 · ✏️ 편집으로 추가해보세요</p>
+          )}
+        </div>
 
         {/* 한줄평 */}
         {place.review && (

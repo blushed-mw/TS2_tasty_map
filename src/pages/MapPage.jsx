@@ -8,7 +8,7 @@ import { useCurrentUser } from '../context/UserContext'
 import { SKT_TOWER } from '../constants/locations'
 
 export default function MapPage() {
-  const { places, loading, addPlace, deletePlace } = usePlaces()
+  const { places, loading, addPlace, deletePlace, updatePlaceTags } = usePlaces()
   const { currentUser } = useCurrentUser()
   const [pendingCoord, setPendingCoord] = useState(null)
   const [mapCenter, setMapCenter] = useState({ lat: SKT_TOWER.lat, lng: SKT_TOWER.lng })
@@ -55,6 +55,10 @@ export default function MapPage() {
           place={selectedPlace}
           currentUser={currentUser}
           onClose={() => setSelectedPlace(null)}
+          onUpdateTags={async (id, tags) => {
+            await updatePlaceTags(id, tags)
+            setSelectedPlace((prev) => prev?.id === id ? { ...prev, tags } : prev)
+          }}
         />
       )}
 

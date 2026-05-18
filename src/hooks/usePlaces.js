@@ -38,5 +38,16 @@ export function usePlaces() {
     setPlaces((prev) => prev.filter((p) => p.id !== id))
   }
 
-  return { places, loading, addPlace, deletePlace, refetch: fetchPlaces }
+  const updatePlaceTags = async (id, tags) => {
+    const { data, error } = await supabase
+      .from('places')
+      .update({ tags })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    setPlaces((prev) => prev.map((p) => (p.id === id ? data : p)))
+  }
+
+  return { places, loading, addPlace, deletePlace, updatePlaceTags, refetch: fetchPlaces }
 }
