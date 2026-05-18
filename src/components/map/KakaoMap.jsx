@@ -1,15 +1,14 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Map, CustomOverlayMap, useKakaoLoader } from 'react-kakao-maps-sdk'
 import { SKT_TOWER, MAP_DEFAULT_LEVEL } from '../../constants/locations'
 import CharacterMarker from './CharacterMarker'
 import InfoPopup from './InfoPopup'
 
-export default function KakaoMap({ places, onMapClick, center }) {
+export default function KakaoMap({ places, onMapClick, center, selectedPlace, onSelectedPlaceChange }) {
   const [loading, error] = useKakaoLoader({
     appkey: import.meta.env.VITE_KAKAO_MAP_KEY,
     libraries: ['services'],
   })
-  const [selectedPlace, setSelectedPlace] = useState(null)
   // CustomOverlayMap 내부 클릭이 지도 onClick으로 전파되는 것을 차단하기 위한 플래그
   const overlayClickedRef = useRef(false)
 
@@ -29,14 +28,14 @@ export default function KakaoMap({ places, onMapClick, center }) {
         overlayClickedRef.current = false
         return
       }
-      setSelectedPlace(null)
+      onSelectedPlaceChange(null)
       onMapClick({ lat, lng })
     }, 0)
   }
 
   const handleMarkerClick = (p) => {
     overlayClickedRef.current = true
-    setSelectedPlace(p)
+    onSelectedPlaceChange(p)
   }
 
   const handleOverlayClick = () => {
@@ -45,7 +44,7 @@ export default function KakaoMap({ places, onMapClick, center }) {
 
   const handlePopupClose = () => {
     overlayClickedRef.current = true
-    setSelectedPlace(null)
+    onSelectedPlaceChange(null)
   }
 
   return (

@@ -9,6 +9,7 @@ export default function MapPage() {
   const { places, loading, addPlace, deletePlace } = usePlaces()
   const [pendingCoord, setPendingCoord] = useState(null)
   const [mapCenter, setMapCenter] = useState({ lat: SKT_TOWER.lat, lng: SKT_TOWER.lng })
+  const [selectedPlace, setSelectedPlace] = useState(null)
 
   const handleMapClick = (coord) => {
     setPendingCoord(coord)
@@ -21,6 +22,7 @@ export default function MapPage() {
 
   const handleSidebarPlaceClick = (place) => {
     setMapCenter({ lat: place.latitude, lng: place.longitude })
+    setSelectedPlace(place)
   }
 
   return (
@@ -31,7 +33,7 @@ export default function MapPage() {
           지도를 불러오는 중...
         </div>
       ) : (
-        <KakaoMap places={places} onMapClick={handleMapClick} center={mapCenter} />
+        <KakaoMap places={places} onMapClick={handleMapClick} center={mapCenter} selectedPlace={selectedPlace} onSelectedPlaceChange={setSelectedPlace} />
       )}
 
       {/* 맛집 리스트 사이드바 */}
