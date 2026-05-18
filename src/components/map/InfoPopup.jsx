@@ -16,7 +16,7 @@ export default function InfoPopup({ place, onClose, onOverlayClick }) {
   return (
     <CustomOverlayMap
       position={{ lat: place.latitude, lng: place.longitude }}
-      yAnchor={2.1}
+      yAnchor={1.6}
     >
       <div className="relative w-64 bg-white rounded-2xl shadow-xl border border-pink-100 p-4" onClick={onOverlayClick}>
         {/* 닫기 버튼 */}

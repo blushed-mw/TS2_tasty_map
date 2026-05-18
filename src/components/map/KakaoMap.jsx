@@ -20,14 +20,18 @@ export default function KakaoMap({ places, onMapClick, center }) {
   }
 
   const handleMapClick = (_map, mouseEvent) => {
-    if (overlayClickedRef.current) {
-      overlayClickedRef.current = false
-      return
-    }
     const lat = mouseEvent.latLng.getLat()
     const lng = mouseEvent.latLng.getLng()
-    setSelectedPlace(null)
-    onMapClick({ lat, lng })
+    // Kakao SDK의 map click이 overlay DOM click보다 먼저 발생할 수 있으므로
+    // setTimeout(0)으로 한 틱 뒤에 처리해 overlay click 핸들러가 먼저 실행되도록 함
+    setTimeout(() => {
+      if (overlayClickedRef.current) {
+        overlayClickedRef.current = false
+        return
+      }
+      setSelectedPlace(null)
+      onMapClick({ lat, lng })
+    }, 0)
   }
 
   const handleMarkerClick = (p) => {

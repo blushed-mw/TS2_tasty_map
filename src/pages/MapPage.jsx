@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import KakaoMap from '../components/map/KakaoMap'
 import AddPinForm from '../components/map/AddPinForm'
+import PlacesSidebar from '../components/map/PlacesSidebar'
 import { usePlaces } from '../hooks/usePlaces'
 import { SKT_TOWER } from '../constants/locations'
 
 export default function MapPage() {
-  const { places, loading, addPlace } = usePlaces()
+  const { places, loading, addPlace, deletePlace } = usePlaces()
   const [pendingCoord, setPendingCoord] = useState(null)
   const [mapCenter, setMapCenter] = useState({ lat: SKT_TOWER.lat, lng: SKT_TOWER.lng })
 
@@ -16,6 +17,10 @@ export default function MapPage() {
   const handlePlaceSelect = (coord) => {
     setMapCenter(coord)
     setPendingCoord(coord)
+  }
+
+  const handleSidebarPlaceClick = (place) => {
+    setMapCenter({ lat: place.latitude, lng: place.longitude })
   }
 
   return (
@@ -29,7 +34,16 @@ export default function MapPage() {
         <KakaoMap places={places} onMapClick={handleMapClick} center={mapCenter} />
       )}
 
-      {/* 맛집 검색 버튼 */}
+      {/* 맛집 리스트 사이드바 */}
+      {!loading && (
+        <PlacesSidebar
+          places={places}
+          onDelete={deletePlace}
+          onPlaceClick={handleSidebarPlaceClick}
+        />
+      )}
+
+      {/* 맛집 등록 버튼 */}
       {!pendingCoord && (
         <button
           onClick={() => setPendingCoord(mapCenter)}
