@@ -43,7 +43,7 @@ export default function InfoPopup({ place, onClose, onOverlayClick }) {
 
         {/* 한줄평 */}
         {place.review && (
-          <p className="text-xs text-gray-600 bg-pink-50 rounded-xl px-3 py-2 mb-2 leading-relaxed">
+          <p className="text-xs text-gray-600 bg-pink-50 rounded-xl px-3 py-2 mb-2 leading-relaxed max-h-24 overflow-y-auto">
             💬 {place.review}
           </p>
         )}

@@ -27,13 +27,15 @@ export function usePlaces() {
   }, [fetchPlaces])
 
   const addPlace = async (placeData) => {
-    const { error } = await supabase.from('places').insert([placeData])
+    const { data, error } = await supabase.from('places').insert([placeData]).select().single()
     if (error) throw error
+    setPlaces((prev) => [data, ...prev])
   }
 
   const deletePlace = async (id) => {
     const { error } = await supabase.from('places').delete().eq('id', id)
     if (error) throw error
+    setPlaces((prev) => prev.filter((p) => p.id !== id))
   }
 
   return { places, loading, addPlace, deletePlace, refetch: fetchPlaces }
