@@ -34,26 +34,63 @@ export function usePlaceDetail(placeId) {
   const toggleLike = async (memberName) => {
     const existing = likes.find((l) => l.member_name === memberName)
     if (existing) {
+      // 즉시 제거
+      setLikes((prev) => prev.filter((l) => l.id !== existing.id))
       const { error } = await supabase.from('place_likes').delete().eq('id', existing.id)
-      if (error) throw error
+      if (error) {
+        setLikes((prev) => [...prev, existing])
+        throw error
+      }
     } else {
-      const { error } = await supabase.from('place_likes').insert({ place_id: placeId, member_name: memberName })
-      if (error) throw error
+      // 즉시 추가 (임시 id)
+      const temp = { id: `temp-${Date.now()}`, place_id: placeId, member_name: memberName, created_at: new Date().toISOString() }
+      setLikes((prev) => [...prev, temp])
+      const { data, error } = await supabase
+        .from('place_likes')
+        .insert({ place_id: placeId, member_name: memberName })
+        .select()
+        .single()
+      if (error) {
+        setLikes((prev) => prev.filter((l) => l.id !== temp.id))
+        throw error
+      }
+      // 임시 id를 실제 DB id로 교체
+      setLikes((prev) => prev.map((l) => (l.id === temp.id ? data : l)))
     }
   }
 
   const addComment = async (memberName, content) => {
-    const { error } = await supabase.from('place_comments').insert({
+    const temp = {
+      id: `temp-${Date.now()}`,
       place_id: placeId,
       member_name: memberName,
       content: content.trim(),
-    })
-    if (error) throw error
+      created_at: new Date().toISOString(),
+    }
+    // 즉시 추가
+    setComments((prev) => [...prev, temp])
+    const { data, error } = await supabase
+      .from('place_comments')
+      .insert({ place_id: placeId, member_name: memberName, content: content.trim() })
+      .select()
+      .single()
+    if (error) {
+      setComments((prev) => prev.filter((c) => c.id !== temp.id))
+      throw error
+    }
+    // 임시 id를 실제 DB id로 교체
+    setComments((prev) => prev.map((c) => (c.id === temp.id ? data : c)))
   }
 
   const deleteComment = async (commentId) => {
+    const backup = comments.find((c) => c.id === commentId)
+    // 즉시 제거
+    setComments((prev) => prev.filter((c) => c.id !== commentId))
     const { error } = await supabase.from('place_comments').delete().eq('id', commentId)
-    if (error) throw error
+    if (error) {
+      if (backup) setComments((prev) => [...prev, backup].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)))
+      throw error
+    }
   }
 
   return { likes, comments, loading, toggleLike, addComment, deleteComment }
