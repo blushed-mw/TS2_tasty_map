@@ -66,6 +66,20 @@ export default function PlaceDetailPanel({ place, currentUser, onClose }) {
 
       {/* 스크롤 본문 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+        {/* 태그 */}
+        {place.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {place.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-0.5 bg-pink-50 text-pink-400 rounded-full text-xs font-medium"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* 한줄평 */}
         {place.review && (
           <p className="text-xs text-gray-600 bg-pink-50 rounded-xl px-3 py-2 leading-relaxed">

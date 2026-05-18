@@ -2,10 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { TEAM_MEMBERS, getCharacterIdByName } from '../../constants/characters'
 import { useCurrentUser } from '../../context/UserContext'
 
-/**
- * 핀 등록 모달 폼
- * coord: { lat, lng } — 지도 클릭으로 받은 좌표 (또는 장소 검색으로 업데이트)
- */
+const SKIP_TAGS = new Set(['음식점', '음식'])
+
+function parseKakaoCategory(categoryName) {
+  if (!categoryName) return []
+  return categoryName
+    .split('>')
+    .map((s) => s.trim())
+    .filter((s) => s && !SKIP_TAGS.has(s))
+}
+
 export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) {
   const { currentUser } = useCurrentUser()
   const [form, setForm] = useState({
@@ -13,6 +19,8 @@ export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) 
     review: '',
     pinned_by: currentUser || TEAM_MEMBERS[0].name,
   })
+  const [tags, setTags] = useState([])
+  const [tagInput, setTagInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [selectedCoord, setSelectedCoord] = useState(coord)
@@ -20,7 +28,6 @@ export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) 
   const [submitting, setSubmitting] = useState(false)
   const psRef = useRef(null)
 
-  // Kakao Places 서비스 초기화
   useEffect(() => {
     if (window.kakao?.maps?.services) {
       psRef.current = new window.kakao.maps.services.Places()
@@ -37,13 +44,30 @@ export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) 
   }
 
   const handleSelectResult = (result) => {
-    const coord = { lat: parseFloat(result.y), lng: parseFloat(result.x) }
-    setSelectedCoord(coord)
+    const newCoord = { lat: parseFloat(result.y), lng: parseFloat(result.x) }
+    setSelectedCoord(newCoord)
     setSelectedAddress(result.road_address_name || result.address_name)
     setForm((f) => ({ ...f, place_name: result.place_name }))
+    setTags(parseKakaoCategory(result.category_name))
     setSearchResults([])
     setSearchQuery('')
-    onPlaceSelect?.(coord)
+    onPlaceSelect?.(newCoord)
+  }
+
+  const addTag = (raw) => {
+    const cleaned = raw.trim().replace(/^#/, '')
+    if (!cleaned || tags.includes(cleaned)) return
+    setTags((prev) => [...prev, cleaned])
+  }
+
+  const removeTag = (tag) => setTags((prev) => prev.filter((t) => t !== tag))
+
+  const handleTagKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addTag(tagInput)
+      setTagInput('')
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -59,6 +83,7 @@ export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) 
         pinned_by: form.pinned_by,
         character_id: getCharacterIdByName(form.pinned_by),
         review: form.review.trim(),
+        tags,
       })
       onClose()
     } catch (err) {
@@ -105,6 +130,9 @@ export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) 
                 >
                   <p className="font-medium text-gray-700">{r.place_name}</p>
                   <p className="text-xs text-gray-400">{r.road_address_name || r.address_name}</p>
+                  {r.category_name && (
+                    <p className="text-xs text-pink-400 mt-0.5">{r.category_name}</p>
+                  )}
                 </li>
               ))}
             </ul>
@@ -122,6 +150,46 @@ export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) 
               value={form.place_name}
               onChange={(e) => setForm((f) => ({ ...f, place_name: e.target.value }))}
             />
+          </div>
+
+          {/* 태그 */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">태그 (검색 시 자동 입력, 직접 추가 가능)</label>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-pink-50 text-pink-500 rounded-full text-xs font-medium"
+                  >
+                    #{tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="text-pink-300 hover:text-pink-500 leading-none"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
+                placeholder="예: 혼밥, 데이트, 뷰맛집 — Enter로 추가"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+              />
+              <button
+                type="button"
+                onClick={() => { addTag(tagInput); setTagInput('') }}
+                className="px-3 py-2 bg-pink-100 text-pink-600 rounded-xl text-sm font-medium hover:bg-pink-200 transition-colors"
+              >
+                추가
+              </button>
+            </div>
           </div>
 
           {/* 등록자 */}

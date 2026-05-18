@@ -54,12 +54,25 @@ export default function PlacesSidebar({ places, onDelete, onPlaceClick }) {
   const [isOpen, setIsOpen] = useState(true)
   const [query, setQuery] = useState('')
   const [sortBy, setSortBy] = useState('newest')
+  const [selectedTags, setSelectedTags] = useState([])
   const likesCounts = useAllLikesCounts()
 
-  const filtered = places.filter((p) =>
-    p.place_name.toLowerCase().includes(query.toLowerCase()) ||
-    p.pinned_by.toLowerCase().includes(query.toLowerCase())
-  )
+  const allTags = [...new Set(places.flatMap((p) => p.tags ?? []))].sort()
+
+  const toggleTag = (tag) =>
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+
+  const filtered = places.filter((p) => {
+    const matchesQuery =
+      p.place_name.toLowerCase().includes(query.toLowerCase()) ||
+      p.pinned_by.toLowerCase().includes(query.toLowerCase())
+    const matchesTags =
+      selectedTags.length === 0 ||
+      selectedTags.some((t) => p.tags?.includes(t))
+    return matchesQuery && matchesTags
+  })
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === 'likes') {
@@ -111,6 +124,38 @@ export default function PlacesSidebar({ places, onDelete, onPlaceClick }) {
               </button>
             ))}
           </div>
+
+          {/* 태그 필터 */}
+          {allTags.length > 0 && (
+            <div className="mt-2.5">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs text-gray-400 font-medium">태그 필터</p>
+                {selectedTags.length > 0 && (
+                  <button
+                    onClick={() => setSelectedTags([])}
+                    className="text-xs text-pink-400 hover:text-pink-600"
+                  >
+                    초기화
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                      selectedTags.includes(tag)
+                        ? 'bg-pink-400 text-white'
+                        : 'bg-gray-100 text-gray-500 hover:bg-pink-50 hover:text-pink-400'
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mx-4 border-t border-gray-100 shrink-0" />
@@ -135,7 +180,10 @@ export default function PlacesSidebar({ places, onDelete, onPlaceClick }) {
 
         {/* 하단 카운트 */}
         <div className="px-4 py-2.5 border-t border-gray-100 shrink-0">
-          <p className="text-xs text-gray-400">총 {sorted.length}개</p>
+          <p className="text-xs text-gray-400">
+            총 {sorted.length}개
+            {selectedTags.length > 0 && ` · #${selectedTags.join(' #')} 필터 중`}
+          </p>
         </div>
       </div>
 
