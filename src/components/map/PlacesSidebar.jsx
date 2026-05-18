@@ -62,7 +62,7 @@ export default function PlacesSidebar({ places, onDelete, onPlaceClick }) {
           <p className="text-xs font-bold text-gray-400 tracking-wider mb-3">📍 맛집 리스트</p>
           <input
             type="text"
-            placeholder="맛집 검색..."
+            placeholder="리스트 내 맛집 검색..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 transition"

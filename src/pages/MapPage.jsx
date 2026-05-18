@@ -49,7 +49,7 @@ export default function MapPage() {
           onClick={() => setPendingCoord(mapCenter)}
           className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-4 py-2 bg-white rounded-full shadow-md text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          🔍 맛집 검색
+          🔍 새로운 맛집 등록
         </button>
       )}
 
