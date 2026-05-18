@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { TEAM_MEMBERS, getCharacterIdByName } from '../../constants/characters'
+import { useCurrentUser } from '../../context/UserContext'
 
 /**
  * 핀 등록 모달 폼
  * coord: { lat, lng } — 지도 클릭으로 받은 좌표 (또는 장소 검색으로 업데이트)
  */
 export default function AddPinForm({ coord, onSubmit, onClose, onPlaceSelect }) {
+  const { currentUser } = useCurrentUser()
   const [form, setForm] = useState({
     place_name: '',
     review: '',
-    pinned_by: TEAM_MEMBERS[0].name,
+    pinned_by: currentUser || TEAM_MEMBERS[0].name,
   })
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
