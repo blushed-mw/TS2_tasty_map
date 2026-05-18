@@ -1,5 +1,15 @@
 import { useState } from 'react'
 import { getCharacter } from '../../constants/characters'
+import { haversineKm } from '../../utils/distance'
+import { SKT_TOWER } from '../../constants/locations'
+import { useAllLikesCounts } from '../../hooks/useAllLikesCounts'
+
+const SORT_OPTIONS = [
+  { key: 'likes',    label: '❤️ 좋아요순' },
+  { key: 'distance', label: '🚶 가까운순' },
+  { key: 'newest',   label: '🆕 최신순'   },
+  { key: 'oldest',   label: '🕰️ 오래된순' },
+]
 
 function PlaceItem({ place, onDelete, onPlaceClick }) {
   const char = getCharacter(place.character_id)
@@ -43,11 +53,29 @@ function PlaceItem({ place, onDelete, onPlaceClick }) {
 export default function PlacesSidebar({ places, onDelete, onPlaceClick }) {
   const [isOpen, setIsOpen] = useState(true)
   const [query, setQuery] = useState('')
+  const [sortBy, setSortBy] = useState('newest')
+  const likesCounts = useAllLikesCounts()
 
   const filtered = places.filter((p) =>
     p.place_name.toLowerCase().includes(query.toLowerCase()) ||
     p.pinned_by.toLowerCase().includes(query.toLowerCase())
   )
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'likes') {
+      return (likesCounts[b.id] ?? 0) - (likesCounts[a.id] ?? 0)
+    }
+    if (sortBy === 'distance') {
+      const da = haversineKm(SKT_TOWER.lat, SKT_TOWER.lng, a.latitude, a.longitude)
+      const db = haversineKm(SKT_TOWER.lat, SKT_TOWER.lng, b.latitude, b.longitude)
+      return da - db
+    }
+    if (sortBy === 'oldest') {
+      return new Date(a.created_at) - new Date(b.created_at)
+    }
+    // newest (default)
+    return new Date(b.created_at) - new Date(a.created_at)
+  })
 
   return (
     <div className="absolute left-0 top-0 h-full z-10 flex pointer-events-none">
@@ -67,18 +95,34 @@ export default function PlacesSidebar({ places, onDelete, onPlaceClick }) {
             onChange={(e) => setQuery(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 transition"
           />
+          {/* 정렬 버튼 */}
+          <div className="grid grid-cols-2 gap-1.5 mt-2.5">
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setSortBy(opt.key)}
+                className={`py-1.5 rounded-xl text-xs font-medium transition-colors ${
+                  sortBy === opt.key
+                    ? 'bg-pink-300 text-white'
+                    : 'bg-gray-50 text-gray-500 hover:bg-pink-50 hover:text-pink-400'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mx-4 border-t border-gray-100 shrink-0" />
 
         {/* 맛집 목록 */}
         <div className="flex-1 overflow-y-auto py-2 px-2">
-          {filtered.length === 0 ? (
+          {sorted.length === 0 ? (
             <p className="text-center text-xs text-gray-400 py-8">
               {query ? '검색 결과가 없어요' : '등록된 맛집이 없어요'}
             </p>
           ) : (
-            filtered.map((place) => (
+            sorted.map((place) => (
               <PlaceItem
                 key={place.id}
                 place={place}
@@ -91,7 +135,7 @@ export default function PlacesSidebar({ places, onDelete, onPlaceClick }) {
 
         {/* 하단 카운트 */}
         <div className="px-4 py-2.5 border-t border-gray-100 shrink-0">
-          <p className="text-xs text-gray-400">총 {filtered.length}개</p>
+          <p className="text-xs text-gray-400">총 {sorted.length}개</p>
         </div>
       </div>
 

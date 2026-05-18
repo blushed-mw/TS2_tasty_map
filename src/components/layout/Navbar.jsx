@@ -1,7 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useCurrentUser } from '../../context/UserContext'
+import { TEAM_MEMBERS } from '../../constants/characters'
 
 export default function Navbar() {
   const navigate = useNavigate()
+  const { currentUser, selectUser } = useCurrentUser()
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
@@ -32,12 +35,26 @@ export default function Navbar() {
         </NavLink>
       </div>
 
-      <button
-        onClick={handleLogout}
-        className="text-xs text-gray-400 hover:text-pink-400 transition-colors"
-      >
-        나가기
-      </button>
+      <div className="flex items-center gap-3">
+        <select
+          value={currentUser}
+          onChange={(e) => selectUser(e.target.value)}
+          className="text-xs border border-pink-100 rounded-full px-3 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-200 cursor-pointer"
+        >
+          <option value="">나는 누구? 👤</option>
+          {TEAM_MEMBERS.map((m) => (
+            <option key={m.name} value={m.name}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleLogout}
+          className="text-xs text-gray-400 hover:text-pink-400 transition-colors"
+        >
+          나가기
+        </button>
+      </div>
     </nav>
   )
 }

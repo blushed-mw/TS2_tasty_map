@@ -5,7 +5,7 @@ import { getCharacter } from '../../constants/characters'
  * 캐릭터 이모지 + 이름 라벨 오버레이 마커
  * place: { id, place_name, latitude, longitude, pinned_by, character_id, review }
  */
-export default function CharacterMarker({ place, onClick }) {
+export default function CharacterMarker({ place, isSelected, onClick }) {
   const char = getCharacter(place.character_id)
 
   return (
@@ -19,7 +19,9 @@ export default function CharacterMarker({ place, onClick }) {
       >
         {/* 캐릭터 버블 */}
         <div
-          className="w-11 h-11 rounded-full flex items-center justify-center text-2xl shadow-md border-2 border-white group-hover:scale-110 transition-transform"
+          className={`w-11 h-11 rounded-full flex items-center justify-center text-2xl shadow-md border-2 group-hover:scale-110 transition-transform ${
+            isSelected ? 'border-pink-400 scale-110 shadow-pink-200 shadow-lg' : 'border-white'
+          }`}
           style={{ backgroundColor: char.color }}
         >
           {char.emoji}

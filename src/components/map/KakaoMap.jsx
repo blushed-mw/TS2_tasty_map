@@ -2,7 +2,6 @@ import { useRef } from 'react'
 import { Map, CustomOverlayMap, useKakaoLoader } from 'react-kakao-maps-sdk'
 import { SKT_TOWER, MAP_DEFAULT_LEVEL } from '../../constants/locations'
 import CharacterMarker from './CharacterMarker'
-import InfoPopup from './InfoPopup'
 
 export default function KakaoMap({ places, onMapClick, center, selectedPlace, onSelectedPlaceChange }) {
   const [loading, error] = useKakaoLoader({
@@ -38,15 +37,6 @@ export default function KakaoMap({ places, onMapClick, center, selectedPlace, on
     onSelectedPlaceChange(p)
   }
 
-  const handleOverlayClick = () => {
-    overlayClickedRef.current = true
-  }
-
-  const handlePopupClose = () => {
-    overlayClickedRef.current = true
-    onSelectedPlaceChange(null)
-  }
-
   return (
     <Map
       center={center ?? { lat: SKT_TOWER.lat, lng: SKT_TOWER.lng }}
@@ -72,18 +62,10 @@ export default function KakaoMap({ places, onMapClick, center, selectedPlace, on
         <CharacterMarker
           key={place.id}
           place={place}
+          isSelected={selectedPlace?.id === place.id}
           onClick={handleMarkerClick}
         />
       ))}
-
-      {/* 선택된 마커의 상세 팝업 */}
-      {selectedPlace && (
-        <InfoPopup
-          place={selectedPlace}
-          onClose={handlePopupClose}
-          onOverlayClick={handleOverlayClick}
-        />
-      )}
     </Map>
   )
 }

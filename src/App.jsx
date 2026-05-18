@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { UserProvider } from './context/UserContext'
 import Navbar from './components/layout/Navbar'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
@@ -8,6 +9,7 @@ import TastePage from './pages/TastePage'
 export default function App() {
   return (
     <BrowserRouter>
+      <UserProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route
@@ -51,6 +53,7 @@ export default function App() {
         />
         <Route path="*" element={<Navigate to="/map" replace />} />
       </Routes>
+      </UserProvider>
     </BrowserRouter>
   )
 }
